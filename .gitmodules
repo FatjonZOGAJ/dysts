@@ -1,0 +1,3 @@
+[submodule "RNN-RC-Chaos"]
+	path = RNN-RC-Chaos
+	url = git@github.com:FatjonZOGAJ/RNN-RC-Chaos.git
