@@ -18,8 +18,28 @@ import echotorch.nn as etnn
 import echotorch.utils
 from echotorch.utils.matrix_generation import *
 
-from models import models
-from models.LiESN import LiESNFitter
+
+module_paths = [
+	os.path.abspath(os.getcwd()),
+	#os.path.abspath(os.getcwd() + '//..'),
+	#os.path.abspath(os.getcwd() + '//rc_chaos'),
+	#os.path.abspath(os.getcwd() + '//rc_chaos//models'),
+	os.path.abspath(os.getcwd() + '//rc_chaos//Methods'),
+	#os.path.abspath(os.getcwd() + '//..//rc_chaos//Methods'),
+	#os.path.abspath(os.getcwd() + '//..//rc_chaos//Models//esn')
+]
+
+for module_path in module_paths:
+	print(module_path)
+	if module_path not in sys.path:
+		sys.path.append(module_path)
+        
+        
+#from models import models
+#from models.LiESN import LiESNFitter
+
+from rc_chaos.Methods.Models.esn.esn_rc_dyst_filip import esn
+models = {'esn': esn}
 from rc_chaos.Methods.RUN import new_args_dict
 
 cwd = os.path.dirname(os.path.realpath(__file__))
@@ -93,41 +113,19 @@ for model_name in ["AutoARIMA", "FFT", "NaiveDrift", "NaiveMean", "NaiveSeasonal
 # TODO: run with SKIP_EXISTING FALSE to rerun experiments that were conducted during debugging
 # first entries are default
 parameter_candidates['esn'] = {
-    "reservoir_size": [1000, 2000, 5000],
-    "sparsity": [0.01, 0.1], # 0.001 does not work/converge
-    "radius": [0.6, 0.2, 1.0],
+    "reservoir_size": [10, 100, 1000, 2000],
+    "sparsity": [0.01, 0.1, 0.2], # 0.001 does not work/converge
+    "radius": [0.6],
     "sigma_input": [1],
-    "dynamics_fit_ratio": [2 / 7, 0.05, 0.1, 0.5],
+    "dynamics_fit_ratio": [2 / 7],
     "regularization": [0.0],
-    "scaler_tt": ['Standard', 'MinMaxZeroOne'],
-    "solver": ['auto']  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
+    "scaler_tt": ['Standard'],
+    "solver": ['pinv'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
+    'activation_func':['tanh'], 
+    'W_scaling':[1]
 }
 
-# TODO find good values
-# TODO also try other ESN models
-n_train_samples = [1]
-n_test_samples = [1]
-spectral_radius = [0.9]
-leaky_rate = [1.0]
-input_dim = [1]
-n_hidden = [100]
-learning_algos = ['inv']  # , 'pinv']
 
-# TODO
-'''
-parameter_candidates['LiESN'] = {
-    "lags": time_delays,
-    "input_dim": input_dim,
-    "hidden_dim": n_hidden,
-    "output_dim": [1],
-    "spectral_radius": spectral_radius,
-    "learning_algo": learning_algos,
-    "leaky_rate": leaky_rate,
-    "w_generator": [MatrixGenerator()],  # TODO: check these
-    "win_generator": [MatrixGenerator()],
-    "wbias_generator": [MatrixGenerator()]
-}
-'''
 
 for equation_name in equation_data.dataset:
 
@@ -152,8 +150,9 @@ for equation_name in equation_data.dataset:
             model = models[model_name]()
         else:
             model = getattr(darts.models, model_name)
+        
         model_best = model.gridsearch(parameter_candidates[model_name], y_train_ts, val_series=y_test_ts,
-                                      metric=darts.metrics.mse)
+                                      metric=darts.metrics.smape)
 
         best_hyperparameters = model_best[1].copy()
 
