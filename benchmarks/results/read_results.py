@@ -3,11 +3,27 @@ from collections import defaultdict
 
 
 class ResultsObject():
-    def __init__(self, path='results_test_univariate__pts_per_period_100__periods_12.json'):
+    def __init__(self, path='results_test_univariate__pts_per_period_15__periods_12_DEBUG.json'):
         f = open(path)
         self.results = json.load(f)
         self.new_model_ranks = defaultdict(list)
         self.scores = defaultdict(list)
+
+    def average_all_methods(self):
+        models = set()
+        for dyn_syst in self.scores:
+            for rank, (model_name, score) in enumerate(self.scores[dyn_syst]):
+                self.new_model_ranks[model_name].append((dyn_syst, rank))
+                models.add(model_name)
+
+        models_ranked = []
+        for model in models:
+            models_ranked.append((model, self.get_average_rank(model, print_out=True)))
+
+        models_ranked.sort(key = lambda x: x[1])
+        for model, rank in models_ranked:
+            print(f'Rank {rank:2.3f} {model}')
+
 
     def sort_results(self, metric='smape', print_out=False):
         results = self.results
@@ -49,10 +65,14 @@ class ResultsObject():
         n = len(self.new_model_ranks[model_name])
         rank_sum = sum([x[1] for x in self.new_model_ranks[model_name]])
         avg_rank = rank_sum / n
-        n_models = len(self.results['Aizawa'])
+        n_models = len(self.results['Aizawa']) - 1 # one column is 'values'
         if print_out:
             print(f'{model_name} average rank {avg_rank} out of {n_models} ')
+        return avg_rank
 
 
 if __name__ == "__main__":
-    ret = ResultsObject().sort_results(print_out=True)
+    results = ResultsObject()
+    results.sort_results(print_out=True)
+    results.average_all_methods()
+    print('Finished')

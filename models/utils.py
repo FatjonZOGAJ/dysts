@@ -1,6 +1,7 @@
 import collections
 import os
 import random
+import traceback
 import warnings
 
 import darts
@@ -11,9 +12,10 @@ from darts import TimeSeries
 
 from benchmarks.results.read_results import ResultsObject
 from dysts.datasets import load_file
-'''
+
 def set_seed(seed):
     seed %= 4294967294
+    print(f'Using seed {seed}')
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -22,7 +24,7 @@ def set_seed(seed):
     # does not set tensorflow
     # import tensorflow as tf
     # tf.set_random_seed(seed)
-'''
+
 def eval_simple(model):
     train_data = np.arange(1200)
     split_point = int(5 / 6 * len(train_data))
@@ -141,6 +143,7 @@ def eval_all_dyn_syst(model):
         except Exception as e:
             warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
             failed_combinations[model_name].append(equation_name)
+            traceback.print_exc()
             continue
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))
         true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
