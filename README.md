@@ -8,7 +8,19 @@ To run the experiments and get the rank over all dynamical systems, run:
 
     python rc_chaos/Methods/Models/esn/esn_rc_dyst_copy.py 
 
+For plotting in figure_forecasting_benchmarks.ipynb we need to clone the following
 
+    https://github.com/williamgilpin/degas
+
+For AutoARIMA we need to install the following:
+
+    conda install -c conda-forge -c pytorch u8darts-all
+
+Could also install u8darts[prophet] and u8darts[pmdarima] through pip, but that threw errors for me.
+
+Additionally: https://github.com/pytorch/pytorch/issues/35803
+
+    mv C:\Users\blend\miniconda3\envs\rc\lib\site-packages\torch\lib\caffe2_detectron_ops.dll C:\Users\blend\miniconda3\envs\rc\lib\site-packages\torch\lib\caffe2_detectron_ops.dll_old
 
 ## Dysts Installation
 

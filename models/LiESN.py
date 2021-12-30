@@ -17,6 +17,43 @@ from models.utils import eval_simple, eval_all_dyn_syst
 from rc_chaos.Methods.RUN import getModel, get_args_dict
 
 
+class LiESNForecaster(LiESN, GlobalForecastingModel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def fit(self,
+            series: Union[TimeSeries, Sequence[TimeSeries]],
+            past_covariates: Optional[Union[TimeSeries, Sequence[TimeSeries]]] = None,
+            future_covariates: Optional[Union[TimeSeries, Sequence[TimeSeries]]] = None
+            ) -> None:
+        # input: TimeSeries DataArray
+        super().fit(series)
+        data = torch.Tensor(np.array(series.all_values()))
+        input = Variable(data[:-1].reshape((1, len(data) -1, 1)))
+        target = Variable(data[1:].reshape((1, len(data) -1, 1)))
+        self(input, target)
+
+        self.finalize()
+
+    # TODO: enable predicting on trained and new series
+    def predict(self,
+                n: int,
+                series: Optional[Union[TimeSeries, Sequence[TimeSeries]]] = None,
+                past_covariates: Optional[Union[TimeSeries, Sequence[TimeSeries]]] = None,
+                future_covariates: Optional[Union[TimeSeries, Sequence[TimeSeries]]] = None,
+                num_samples: int = 1,
+                ) -> Union[TimeSeries, Sequence[TimeSeries]]:
+        # only passing n (len of y_val) and continuing on from trained vals (in compute_benchmarks.py)
+        if series is None:
+            series = self.training_series
+
+        data = torch.Tensor(np.array(series.all_values()))
+        data = Variable(data.reshape((1, len(data), 1))) # TODO: other dimension if multidim input)
+        prediction = self(data)
+        df = pd.DataFrame(np.squeeze(prediction))
+        df.index = range(len(data), len(data) + n)
+        return TimeSeries.from_dataframe(df)
+
 class LiESNRegressor(LiESN):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -120,7 +157,7 @@ class LiESNFitter(LiESN, GlobalForecastingModel):
         # TODO: likely error here, also get warnings
 
 
-def get_default(type='normal'):
+def get_default(type='original'):
     # Hyperparameters
     n_train_samples = 1
     n_test_samples = 1
@@ -128,8 +165,18 @@ def get_default(type='normal'):
     leaky_rate = 1.0
     input_dim = 1
     n_hidden = 100
-
-    if type == 'normal':
+    if type == 'original':
+        return LiESNForecaster( input_dim=input_dim,
+            hidden_dim=n_hidden,
+            output_dim=1,
+            spectral_radius=spectral_radius,
+            learning_algo='inv',
+            leaky_rate=leaky_rate,
+            w_generator=MatrixGenerator(),
+            win_generator=MatrixGenerator(),
+            wbias_generator=MatrixGenerator()
+        )
+    elif type == 'normal':
         return LiESNFitter(
             input_dim=input_dim,
             hidden_dim=n_hidden,

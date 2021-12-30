@@ -15,16 +15,20 @@ from darts.models import *
 from darts import TimeSeries
 import darts.models
 
+from models import models
+
+# to change
+pts_per_period = 15  # 100
+hyp_file_ending = '' # '_DEBUG_DEBUG_DEBUG'
+results_path_ending = '' # can also be '_DEBUG'
 
 cwd = os.path.dirname(os.path.realpath(__file__))
-# cwd = os.getcwd()
-input_path = os.path.dirname(cwd)  + "/dysts/data/test_univariate__pts_per_period_100__periods_12.json"
-## link to TEST data
+input_path = os.path.dirname(cwd)  + f"/dysts/data/test_univariate__pts_per_period_{pts_per_period}__periods_12.json"
 
 dataname = os.path.splitext(os.path.basename(os.path.split(input_path)[-1]))[0]
 output_path = cwd + "/results/results_" + dataname + ".json"
 dataname = dataname.replace("test", "train" )
-hyperparameter_path = cwd + "/hyperparameters/hyperparameters_" + dataname + ".json"
+hyperparameter_path = cwd + "/hyperparameters/hyperparameters_" + dataname + f"{hyp_file_ending}.json"
 
 metric_list = [
     'coefficient_of_variation',
@@ -78,7 +82,14 @@ for equation_name in equation_data.dataset:
                 old_val = all_hyperparameters[equation_name][model_name][hyperparameter_name]
                 all_hyperparameters[equation_name][model_name][hyperparameter_name] = getattr(darts.utils.utils.SeasonalityMode, old_val)
     
-        model = getattr(darts.models, model_name)(**all_hyperparameters[equation_name][model_name])
+        if model_name in models:
+            model = models[model_name](**all_hyperparameters[equation_name][model_name])
+        else:
+            model = getattr(darts.models, model_name)(**all_hyperparameters[equation_name][model_name])
+            if model_name == 'Prophet':
+                df = pd.DataFrame(np.squeeze(y_train_ts.values()))
+                df.index = pd.DatetimeIndex(y_train_ts.time_index)
+                y_train_ts = TimeSeries.from_dataframe(df)
         model.fit(y_train_ts)
         y_val_pred = model.predict(len(y_val))
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))
@@ -90,7 +101,7 @@ for equation_name in equation_data.dataset:
             metric_func = getattr(darts.metrics.metrics, metric_name)
             all_results[equation_name][model_name][metric_name] = metric_func(true_y, pred_y)
         
-        with open(output_path, 'w') as f:
+        with open(output_path[:-5] + f'{results_path_ending}.json', 'w') as f:
             json.dump(all_results, f, indent=4)   
         
 
