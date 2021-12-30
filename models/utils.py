@@ -140,37 +140,23 @@ def eval_all_dyn_syst(model):
         y_train, y_val = train_data[:split_point], train_data[split_point:]
         y_train_ts, y_test_ts = TimeSeries.from_dataframe(pd.DataFrame(train_data)).split_before(split_point)
 
-        try:
+        #try:
 
-            # TODO: move to esn class
-            if model.model_name == 'RC-CHAOS-ESN':
-                min_smape = 10000
-                min_smape_model = None
-                for i in range(NUM_RANDOM_RESTARTS):
+        if model.model_name == 'RC-CHAOS-ESN':
 
-                    model = model.fit(y_train_ts)
-                    y_val_pred = model.predict(len(y_val))
-                    pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))
-                    true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
+            model.fit(y_train_ts)
+            y_val_pred = model.predict(len(y_val))
 
-                    metric_func = getattr(darts.metrics.metrics, 'smape')
-                    score = metric_func(true_y, pred_y)
-                    if score < min_smape:
-                        min_smape = score
-                        min_smape_model = model
-                        y_val_pred_min = y_val_pred
-
-                model = min_smape_model
-                y_val_pred = y_val_pred_min
-
-            else:
-                model.fit(y_train_ts)
-                y_val_pred = model.predict(len(y_val))
-        except Exception as e:
-            warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
-            failed_combinations[model_name].append(equation_name)
-            traceback.print_exc()
-            continue
+        else:
+            model.fit(y_train_ts)
+            y_val_pred = model.predict(len(y_val))
+        
+       # except Exception as e:
+        #    warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
+        #    failed_combinations[model_name].append(equation_name)
+        #    traceback.print_exc()
+        #    continue
+        
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))
         true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
 
