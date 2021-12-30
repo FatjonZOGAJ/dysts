@@ -114,43 +114,18 @@ parameter_candidates['esn'] = {
 # TODO: find and try out new values
 # TODO: run with SKIP_EXISTING FALSE to rerun experiments that were conducted during debugging
 # first entries are default
-'''
 parameter_candidates['esn'] = {
-    "reservoir_size": [1000, 2000, 5000],
-    "sparsity": [0.01, 0.1], # 0.001 does not work/converge
+    "reservoir_size": [100, 1000, 2000],
+    "sparsity": [0.01, 0.1, 0.2], # 0.001 does not work/converge
     "radius": [0.6, 0.2, 1.0],
     "sigma_input": [1],
     "dynamics_fit_ratio": [2 / 7, 0.05, 0.1, 0.5],
     "regularization": [0.0],
-    "scaler_tt": ['Standard', 'MinMaxZeroOne'],
-    "solver": ['auto']  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
+    "scaler_tt": ['Standard'], #, 'MinMaxZeroOne'],
+    "solver": ['pinv', 'auto'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
+    'activation_func':['tanh'],
+    'W_scaling':[1]
 }
-'''
-# TODO find good values
-# TODO also try other ESN models
-n_train_samples = [1]
-n_test_samples = [1]
-spectral_radius = [0.9]
-leaky_rate = [1.0]
-input_dim = [1]
-n_hidden = [100]
-learning_algos = ['inv']  # , 'pinv']
-
-# TODO
-'''
-parameter_candidates['LiESN'] = {
-    "lags": time_delays,
-    "input_dim": input_dim,
-    "hidden_dim": n_hidden,
-    "output_dim": [1],
-    "spectral_radius": spectral_radius,
-    "learning_algo": learning_algos,
-    "leaky_rate": leaky_rate,
-    "w_generator": [MatrixGenerator()],  # TODO: check these
-    "win_generator": [MatrixGenerator()],
-    "wbias_generator": [MatrixGenerator()]
-}
-'''
 
 failed_combinations = collections.defaultdict(list)
 for e_i, equation_name in enumerate(equation_data.dataset):
@@ -192,7 +167,7 @@ for e_i, equation_name in enumerate(equation_data.dataset):
                 y_test_ts = TimeSeries.from_dataframe(df)
 
             model_best = model.gridsearch(parameter_candidates[model_name], y_train_ts, val_series=y_test_ts,
-                                          metric=darts.metrics.mse, n_jobs=N_JOBS)
+                                          metric=darts.metrics.smape, n_jobs=N_JOBS)
 
             best_hyperparameters = model_best[1].copy()
 
