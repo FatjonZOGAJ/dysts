@@ -15,7 +15,7 @@ from dysts.datasets import load_file
 
 NUM_RANDOM_RESTARTS = 15
 
-def eval_all_dyn_syst(model):
+def eval_all_dyn_syst_filip(model):
     cwd = os.path.dirname(os.path.realpath(__file__))
     # cwd = os.getcwd()
     #input_path = os.path.dirname(cwd) + "/dysts/data/train_univariate__pts_per_period_100__periods_12.json"
@@ -48,12 +48,11 @@ def eval_all_dyn_syst(model):
     results = ResultsObject(path=results_path)
     results.sort_results(print_out=False, metric=METRIC)
     
-    # eval problematic:
     problematic_equations = ['Arneodo', 'ArnoldWeb', 'BlinkingRotlet', 'BlinkingVortex', 'Bouali', 'CaTwoPlusQuasiperiodic', 'CellularNeuralNetwork', 'Chen', 'CoevolvingPredatorPrey', 'Coullet', 'DequanLi', 'DoubleGyre', 'Duffing', 'ForcedBrusselator']
     
-    #for equation_name in equation_data.dataset:
-    for equation_name in problematic_equations:
-
+    #for equation_name in problematic_equations:
+    for equation_name in equation_data.dataset:
+    
         train_data = np.copy(np.array(equation_data.dataset[equation_name]["values"]))
 
         split_point1 = 800
@@ -71,21 +70,19 @@ def eval_all_dyn_syst(model):
         
         try:
             
-            if model.model_name == 'RC-CHAOS-ESN-1':
+            if model.model_name == 'RC-CHAOS-ESN':
 
                 min_smape = 1000000
                 min_smape_model = None
 
                 for i in range(15):
 
-                    hyperparams = model.sample_set_hyperparams()
+                    #hyperparams = model.sample_set_hyperparams()
                     model.resample = True
                     model.fit(y_train_ts)
 
                     y_val_pred = model.predict(len(y_val))
                     y_val_pred = np.squeeze(y_val_pred.values())
-                    
-                    #y_val_pred = np.squeeze(model.predict(len(y_val)+len(y_test)).values())
 
                     pred_y = TimeSeries.from_dataframe(pd.DataFrame(y_val_pred))
                     true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
@@ -93,26 +90,25 @@ def eval_all_dyn_syst(model):
                     metric_func = getattr(darts.metrics.metrics, 'smape')
                     score = metric_func(true_y, pred_y)
                     if score < min_smape:
-                        
-                        min_hyperparams = hyperparams
+
+                        #min_hyperparams = hyperparams
                         min_smape = score
-                        min_W_in = copy.deepcopy(model.W_in)
-                        min_W_h = copy.deepcopy(model.W_h)
-                
-                model.resample = False
+                        min_W_in = copy.deepcopy(model.cell.W_in)
+                        min_W_h  = copy.deepcopy(model.cell.W_h)
+
                 #model.dynamic_fit_ratio = 4/7
-                
-                print(min_hyperparams)
-                
-                model.set_hyperparams(min_hyperparams)
-                model.fix_weights(min_W_in, min_W_h)
+                #print(min_hyperparams)
+                #model.set_hyperparams(min_hyperparams)
+
+                model.cell.fix_weights(min_W_in, min_W_h)
+                model.resample = False
                 model.fit(y_train_val_ts)
-                
+
                 y_test_pred = model.predict(len(y_test))
                 y_test_pred = np.squeeze(y_test_pred.values())
-               
 
             else:
+
                 model.fit(y_train_val_ts)
                 y_test_pred = model.predict(len(y_test))
                 y_test_pred = np.squeeze(y_test_pred.values())

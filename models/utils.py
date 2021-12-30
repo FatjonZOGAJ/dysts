@@ -140,22 +140,22 @@ def eval_all_dyn_syst(model):
         y_train, y_val = train_data[:split_point], train_data[split_point:]
         y_train_ts, y_test_ts = TimeSeries.from_dataframe(pd.DataFrame(train_data)).split_before(split_point)
 
-        #try:
+        try:
 
-        if model.model_name == 'RC-CHAOS-ESN':
+            if model.model_name == 'RC-CHAOS-ESN':
 
-            model.fit(y_train_ts)
-            y_val_pred = model.predict(len(y_val))
+                model.fit(y_train_ts)
+                y_val_pred = model.predict(len(y_val))
 
-        else:
-            model.fit(y_train_ts)
-            y_val_pred = model.predict(len(y_val))
+            else:
+                model.fit(y_train_ts)
+                y_val_pred = model.predict(len(y_val))
         
-       # except Exception as e:
-        #    warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
-        #    failed_combinations[model_name].append(equation_name)
-        #    traceback.print_exc()
-        #    continue
+        except Exception as e:
+            warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
+            failed_combinations[model_name].append(equation_name)
+            traceback.print_exc()
+            continue
         
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))
         true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
