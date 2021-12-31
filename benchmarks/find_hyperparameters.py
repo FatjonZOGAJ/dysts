@@ -16,6 +16,9 @@ for module_path in module_paths:
         sys.path.append(module_path)
 
 
+from rc_chaos.Methods.Models.esn.esn_rc_dyst_copy import esn
+
+
 from benchmarks.hyperparameter_config import hyperparameter_configs, get_single_config
 from dysts.datasets import *
 
@@ -26,7 +29,7 @@ import darts.models
 
 
 
-from models import models
+#from models import models
 from models.utils import str2bool
 
 cwd = os.path.dirname(os.path.realpath(__file__))
@@ -38,7 +41,7 @@ hyp_file_ending = ''  # '_DEBUG_DEBUG_DEBUG'
 results_path_ending = ''    # can also be '_DEBUG'
 # if we have 100 pts_per_period we should tune on validation data, for 15 it may not overfit too much
 EVALUATE_VALID = False       # evaluate on separate part of data
-N_JOBS = 1 # -1
+N_JOBS = -1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--hyperparam_config", help="See hyperparameter_config.py", type=str)
@@ -159,12 +162,13 @@ for e_i, equation_name in enumerate(equation_data.dataset):
                 print(f"Entry for {equation_name} - {model_name} found, skipping it.")
                 continue
 
-            if (args.hyperparam_config and model_name.split('_')[0] in models):
-                model = models[model_name.split('_')[0]]()
-            elif model_name in models:
-                model = models[model_name]()
-            else:
-                model = getattr(darts.models, model_name)
+            model = esn()
+            #if (args.hyperparam_config and model_name.split('_')[0] in models):
+            #    model = models[model_name.split('_')[0]]()
+            #elif model_name in models:
+            #    model = models[model_name]()
+            #else:
+            #    model = getattr(darts.models, model_name)
 
             # TODO: check if time_index is correct
             if model_name == 'Prophet':
