@@ -19,6 +19,18 @@ import echotorch.nn as etnn
 import echotorch.utils
 from echotorch.utils.matrix_generation import *
 
+
+module_paths = [
+    os.path.abspath(os.getcwd()),
+    os.path.abspath(os.getcwd() + '//rc_chaos//Methods'),
+]
+
+for module_path in module_paths:
+    print(module_path)
+    if module_path not in sys.path:
+        sys.path.append(module_path)
+
+
 from models import models
 from models.LiESN import LiESNFitter
 from rc_chaos.Methods.RUN import new_args_dict
@@ -108,12 +120,15 @@ parameter_candidates['esn'] = {
     "regularization": [0.0],
     "scaler_tt": ['Standard'],
     "solver": ['auto'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
-    "seed": [1] # list(range(20))
+    "seed": [1], # list(range(20))
+    "resample": [True],
+    'W_scaling':[1, 5]
 }
 
 # TODO: find and try out new values
 # TODO: run with SKIP_EXISTING FALSE to rerun experiments that were conducted during debugging
 # first entries are default
+'''
 parameter_candidates['esn'] = {
     "reservoir_size": [100, 1000, 2000],
     "sparsity": [0.01, 0.1, 0.2], # 0.001 does not work/converge
@@ -123,9 +138,10 @@ parameter_candidates['esn'] = {
     "regularization": [0.0],
     "scaler_tt": ['Standard'], #, 'MinMaxZeroOne'],
     "solver": ['pinv', 'auto'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
-    'activation_func':['tanh'],
+    # 'activation_func':['tanh'], # currently only implemented with tanh
     'W_scaling':[1]
 }
+'''
 
 failed_combinations = collections.defaultdict(list)
 for e_i, equation_name in enumerate(equation_data.dataset):
@@ -167,7 +183,8 @@ for e_i, equation_name in enumerate(equation_data.dataset):
                 y_test_ts = TimeSeries.from_dataframe(df)
 
             model_best = model.gridsearch(parameter_candidates[model_name], y_train_ts, val_series=y_test_ts,
-                                          metric=darts.metrics.smape, n_jobs=N_JOBS)
+                                          metric=darts.metrics.smape,
+                                          n_jobs=N_JOBS)    # ATTENTION: under windows n_jobs has to be 1 or it has to be run from commandline
 
             best_hyperparameters = model_best[1].copy()
 
@@ -177,6 +194,8 @@ for e_i, equation_name in enumerate(equation_data.dataset):
                     best_hyperparameters[hyperparameter_name] = best_hyperparameters[hyperparameter_name].name
 
             all_hyperparameters[equation_name][model_name] = best_hyperparameters
+
+            # TODO: evaluate like in compute_benchmarks for faster results
         except Exception as e:
             warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
             failed_combinations[model_name].append(equation_name)

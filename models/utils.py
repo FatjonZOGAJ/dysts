@@ -101,7 +101,7 @@ def eval_single_dyn_syst(model, dataset):
         if metric_name == METRIC:
             value = score
             rank = results.update_results(dataset, model_name, score)
-    return value, rank, model.W_h
+    return value, rank, model._cell.W_h
 
 
 def eval_all_dyn_syst(model):

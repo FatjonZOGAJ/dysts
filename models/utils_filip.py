@@ -93,14 +93,14 @@ def eval_all_dyn_syst_filip(model):
 
                         #min_hyperparams = hyperparams
                         min_smape = score
-                        min_W_in = copy.deepcopy(model.cell.W_in)
-                        min_W_h  = copy.deepcopy(model.cell.W_h)
+                        min_W_in = copy.deepcopy(model._cell.W_in)
+                        min_W_h  = copy.deepcopy(model._cell.W_h)
 
                 #model.dynamic_fit_ratio = 4/7
                 #print(min_hyperparams)
                 #model.set_hyperparams(min_hyperparams)
 
-                model.cell.fix_weights(min_W_in, min_W_h)
+                model._cell.fix_weights(min_W_in, min_W_h)
                 model.resample = False
                 model.fit(y_train_val_ts)
 
