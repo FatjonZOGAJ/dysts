@@ -1,24 +1,9 @@
 #!/usr/bin/python
+import argparse
 import collections
-import sys
 import os
-import json
+import sys
 import traceback
-
-import dysts
-from dysts.datasets import *
-
-import pandas as pd
-
-import darts
-from darts.models import *
-from darts import TimeSeries
-import darts.models
-
-import echotorch.nn as etnn
-import echotorch.utils
-from echotorch.utils.matrix_generation import *
-
 
 module_paths = [
     os.path.abspath(os.getcwd()),
@@ -31,9 +16,18 @@ for module_path in module_paths:
         sys.path.append(module_path)
 
 
+from benchmarks.hyperparameter_config import hyperparameter_configs, get_single_config
+from dysts.datasets import *
+
+import pandas as pd
+
+from darts import TimeSeries
+import darts.models
+
+
+
 from models import models
-from models.LiESN import LiESNFitter
-from rc_chaos.Methods.RUN import new_args_dict
+from models.utils import str2bool
 
 cwd = os.path.dirname(os.path.realpath(__file__))
 # cwd = os.getcwd()
@@ -44,7 +38,12 @@ hyp_file_ending = ''  # '_DEBUG_DEBUG_DEBUG'
 results_path_ending = ''    # can also be '_DEBUG'
 # if we have 100 pts_per_period we should tune on validation data, for 15 it may not overfit too much
 EVALUATE_VALID = False       # evaluate on separate part of data
-N_JOBS = -1
+N_JOBS = 1 # -1
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--hyperparam_config", help="See hyperparameter_config.py", type=str)
+parser.add_argument("--test_single_config", help="", type=str2bool, default=False)
+args = parser.parse_args()
 
 
 # TODO: use full data for better fitting? (may overfit hyperparams)
@@ -111,6 +110,7 @@ for model_name in ["AutoARIMA", "FFT", "NaiveDrift", "NaiveMean", "NaiveSeasonal
     parameter_candidates[model_name] = {}
 
 
+'''
 parameter_candidates['esn'] = {
     "reservoir_size": [1000],
     "sparsity": [0.01],
@@ -119,29 +119,20 @@ parameter_candidates['esn'] = {
     "dynamics_fit_ratio": [2 / 7],
     "regularization": [0.0],
     "scaler_tt": ['Standard'],
-    "solver": ['auto'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
+    "solver": ['pinv'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
     "seed": [1], # list(range(20))
     "resample": [True],
     'W_scaling':[1, 5]
 }
+'''
 
-# TODO: find and try out new values
-# TODO: run with SKIP_EXISTING FALSE to rerun experiments that were conducted during debugging
-# first entries are default
-'''
-parameter_candidates['esn'] = {
-    "reservoir_size": [100, 1000, 2000],
-    "sparsity": [0.01, 0.1, 0.2], # 0.001 does not work/converge
-    "radius": [0.6, 0.2, 1.0],
-    "sigma_input": [1],
-    "dynamics_fit_ratio": [2 / 7, 0.05, 0.1, 0.5],
-    "regularization": [0.0],
-    "scaler_tt": ['Standard'], #, 'MinMaxZeroOne'],
-    "solver": ['pinv', 'auto'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
-    # 'activation_func':['tanh'], # currently only implemented with tanh
-    'W_scaling':[1]
-}
-'''
+if args.hyperparam_config:
+    parameter_candidates = dict()
+    parameter_candidates[args.hyperparam_config] = hyperparameter_configs[args.hyperparam_config]
+    if args.test_single_config:
+        parameter_candidates[args.hyperparam_config] = get_single_config(parameter_candidates[args.hyperparam_config])
+
+    results_path_ending += "_" + args.hyperparam_config
 
 failed_combinations = collections.defaultdict(list)
 for e_i, equation_name in enumerate(equation_data.dataset):
@@ -168,7 +159,9 @@ for e_i, equation_name in enumerate(equation_data.dataset):
                 print(f"Entry for {equation_name} - {model_name} found, skipping it.")
                 continue
 
-            if model_name in models:
+            if (args.hyperparam_config and model_name.split('_')[0] in models):
+                model = models[model_name.split('_')[0]]()
+            elif model_name in models:
                 model = models[model_name]()
             else:
                 model = getattr(darts.models, model_name)
@@ -203,9 +196,9 @@ for e_i, equation_name in enumerate(equation_data.dataset):
             continue
 
         # Overwrite to save even if search stops inbetween
-        with open(output_path[:-5] + f'.json', 'w') as f:
+        with open(output_path[:-5] + f'{results_path_ending}.json', 'w') as f:
             json.dump(all_hyperparameters, f, indent=4)
 
-with open(output_path[:-5] + f'.json', 'w') as f:
+with open(output_path[:-5] + f'{results_path_ending}.json', 'w') as f:
         json.dump(all_hyperparameters, f, indent=4)
 print('Failed combinations', failed_combinations)

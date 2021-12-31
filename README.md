@@ -1,8 +1,14 @@
 ## Main installation
-
+    git clone https://github.com/FatjonZOGAJ/dysts.git
+    cd dysts
     git checkout reservoir_computing
     git submodule init
     git submodule update
+
+    python3 -m venv rc
+    source rc/bin/activate
+    pip install -r req.txt
+    pip install -i https://test.pypi.org/simple/ EchoTorch
 
 To run the experiments and get the rank over all dynamical systems, run: 
 
