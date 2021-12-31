@@ -15,9 +15,8 @@ for module_path in module_paths:
     if module_path not in sys.path:
         sys.path.append(module_path)
 
-
+from benchmarks import eval_test
 from rc_chaos.Methods.Models.esn.esn_rc_dyst_copy import esn
-
 
 from benchmarks.hyperparameter_config import hyperparameter_configs, get_single_config
 from dysts.datasets import *
@@ -137,6 +136,17 @@ if args.hyperparam_config:
 
     results_path_ending += "_" + args.hyperparam_config
 
+    test_input_path = os.path.dirname(cwd)  + f"/dysts/data/test_univariate__pts_per_period_{pts_per_period}__periods_12.json"
+    test_equation_data = load_file(test_input_path)
+
+    try:
+        test_output_path = cwd + "/results/results_" + dataname.replace('train', 'test') + ".json"
+        with open(test_output_path, "r") as file:
+            all_results = json.load(file)
+    except FileNotFoundError:
+        all_results = dict()
+
+
 failed_combinations = collections.defaultdict(list)
 for e_i, equation_name in enumerate(equation_data.dataset):
 
@@ -192,7 +202,6 @@ for e_i, equation_name in enumerate(equation_data.dataset):
 
             all_hyperparameters[equation_name][model_name] = best_hyperparameters
 
-            # TODO: evaluate like in compute_benchmarks for faster results
         except Exception as e:
             warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
             failed_combinations[model_name].append(equation_name)
@@ -202,6 +211,15 @@ for e_i, equation_name in enumerate(equation_data.dataset):
         # Overwrite to save even if search stops inbetween
         with open(output_path[:-5] + f'{results_path_ending}.json', 'w') as f:
             json.dump(all_hyperparameters, f, indent=4)
+
+        try:
+            eval_test(esn(**model_best[1]), model_name, test_equation_data, equation_name, all_results,
+                      test_output_path, results_path_ending)
+        except Exception as e:
+            failed_combinations[f'EVALUATION{model_name}'].append(equation_name)
+            traceback.print_exc()
+            continue
+
 
 with open(output_path[:-5] + f'{results_path_ending}.json', 'w') as f:
         json.dump(all_hyperparameters, f, indent=4)
