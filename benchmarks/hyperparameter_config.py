@@ -1,7 +1,7 @@
 import copy
 
 esn_torch_hyperparam = {
-    "reservoir_size": [100, 1000, 2000],
+    "reservoir_size": [1000, 2000],
     "sparsity": [0.01, 0.1, 0.25],  # 0.001 does not work/converge
     "radius": [0.5, 0.25, 0.1],
     "sigma_input": [1],
@@ -27,7 +27,7 @@ esn_gru_hyperparam = copy.deepcopy(esn_lstm_hyperparam)
 esn_gru_hyperparam['cell_type'] = ['GRU']
 
 esn_numpy_hyperparam = {
-    "reservoir_size": [100, 1000, 2000],
+    "reservoir_size": [1000, 2000],
     "sparsity": [0.01, 0.1, 0.25],  # 0.001 does not work/converge
     "radius": [0.5, 0.25, 0.1],
     "sigma_input": [1],
