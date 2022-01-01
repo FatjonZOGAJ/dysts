@@ -34,18 +34,20 @@ from models.utils import str2bool
 cwd = os.path.dirname(os.path.realpath(__file__))
 # cwd = os.getcwd()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--hyperparam_config", help="See hyperparameter_config.py", type=str)
+parser.add_argument("--test_single_config", help="", type=str2bool, default=False)
+parser.add_argument("--pts_per_period", help="", type=int, default=100)
+args = parser.parse_args()
+
 # to change
-pts_per_period = 100         # 100
+pts_per_period = args.pts_per_period
+#pts_per_period = 100         # 100
 hyp_file_ending = ''  # '_DEBUG_DEBUG_DEBUG'
 results_path_ending = ''    # can also be '_DEBUG'
 # if we have 100 pts_per_period we should tune on validation data, for 15 it may not overfit too much
 EVALUATE_VALID = False       # evaluate on separate part of data
 N_JOBS = -1
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--hyperparam_config", help="See hyperparameter_config.py", type=str)
-parser.add_argument("--test_single_config", help="", type=str2bool, default=False)
-args = parser.parse_args()
 
 
 # TODO: use full data for better fitting? (may overfit hyperparams)
