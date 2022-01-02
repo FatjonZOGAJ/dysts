@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import argparse
 import collections
 import os
 import sys
@@ -29,16 +28,13 @@ import darts.models
 
 
 #from models import models
-from models.utils import str2bool
+from models.utils import get_hyperparam_parser
 
 cwd = os.path.dirname(os.path.realpath(__file__))
 # cwd = os.getcwd()
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--hyperparam_config", help="See hyperparameter_config.py", type=str)
-parser.add_argument("--test_single_config", help="", type=str2bool, default=False)
-parser.add_argument("--pts_per_period", help="", type=int, default=100)
-args = parser.parse_args()
+
+args = get_hyperparam_parser()
 
 # to change
 pts_per_period = args.pts_per_period
@@ -50,7 +46,6 @@ EVALUATE_VALID = False       # evaluate on separate part of data
 N_JOBS = -1
 
 
-# TODO: use full data for better fitting? (may overfit hyperparams)
 input_path = os.path.dirname(cwd) + f"/dysts/data/train_univariate__pts_per_period_{pts_per_period}__periods_12.json"
 network_inputs = [5, 10, int(0.5 * pts_per_period), pts_per_period]  # can't have kernel less than 5
 
@@ -113,23 +108,6 @@ parameter_candidates["Theta"] = {"season_mode": season_values}
 for model_name in ["AutoARIMA", "FFT", "NaiveDrift", "NaiveMean", "NaiveSeasonal", "Prophet"]:
     parameter_candidates[model_name] = {}
 
-
-'''
-parameter_candidates['esn'] = {
-    "reservoir_size": [1000],
-    "sparsity": [0.01],
-    "radius": [0.6],
-    "sigma_input": [1],
-    "dynamics_fit_ratio": [2 / 7],
-    "regularization": [0.0],
-    "scaler_tt": ['Standard'],
-    "solver": ['pinv'],  # "pinv", "auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag"
-    "seed": [1], # list(range(20))
-    "resample": [True],
-    'W_scaling':[1, 5]
-}
-'''
-
 if args.hyperparam_config:
     parameter_candidates = dict()
     parameter_candidates[args.hyperparam_config] = hyperparameter_configs[args.hyperparam_config]
@@ -148,6 +126,16 @@ if args.hyperparam_config:
     except FileNotFoundError:
         all_results = dict()
 
+def get_model(model_name):
+    model_class = model_name
+    if (args.hyperparam_config):
+        model_class = model_name.split('_')[0]
+    if model_class in darts.models.__dict__:
+        model = getattr(darts.models, model_class)
+    else:
+        model = esn
+
+    return model
 
 failed_combinations = collections.defaultdict(list)
 for e_i, equation_name in enumerate(equation_data.dataset):
@@ -174,13 +162,7 @@ for e_i, equation_name in enumerate(equation_data.dataset):
                 print(f"Entry for {equation_name} - {model_name} found, skipping it.")
                 continue
 
-            model = esn()
-            #if (args.hyperparam_config and model_name.split('_')[0] in models):
-            #    model = models[model_name.split('_')[0]]()
-            #elif model_name in models:
-            #    model = models[model_name]()
-            #else:
-            #    model = getattr(darts.models, model_name)
+            model = get_model(model_name)
 
             # TODO: check if time_index is correct
             if model_name == 'Prophet':
@@ -215,7 +197,7 @@ for e_i, equation_name in enumerate(equation_data.dataset):
             json.dump(all_hyperparameters, f, indent=4)
 
         try:
-            eval_test(esn(**model_best[1]), model_name, test_equation_data, equation_name, all_results,
+            eval_test(get_model(model_name)(**model_best[1]), model_name, test_equation_data, equation_name, all_results,
                       test_output_path, results_path_ending)
         except Exception as e:
             failed_combinations[f'EVALUATION{model_name}'].append(equation_name)

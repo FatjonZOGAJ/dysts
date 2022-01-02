@@ -183,3 +183,12 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def get_hyperparam_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--hyperparam_config", help="See hyperparameter_config.py", type=str)
+    parser.add_argument("--test_single_config", help="", type=str2bool, default=False)
+    parser.add_argument("--pts_per_period", help="", type=int, default=100)
+    args = parser.parse_args()
+    return args
