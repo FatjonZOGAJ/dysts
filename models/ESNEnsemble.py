@@ -34,14 +34,15 @@ def main():
         kwargs['seed'] = seed
         kwargs['model_name'] = f'RC-CHAOS-ESN-{seed}'
         kwargs['ensemble_base_model'] = True
+        # TODO try different fit_dynamics_ratio
         models.append((f'esn{seed}', esn(**kwargs)))
 
     ensemble = ESNEnsemble(models, model_name)
 
     eval_simple(ensemble)
-    eval_simple(esn(**new_args_dict()))
+    # eval_simple(esn(**new_args_dict()))
     eval_all_dyn_syst(ensemble)
-    eval_all_dyn_syst(esn(**new_args_dict()))
+    # eval_all_dyn_syst(esn(**new_args_dict()))
 
 
 if __name__ == '__main__':
