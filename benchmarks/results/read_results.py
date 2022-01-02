@@ -1,5 +1,8 @@
+import collections
 import json
+import traceback
 from collections import defaultdict
+
 
 # skip_dyn_systems: Skips the selected dynamical systems
 # incomplete_model: Skips all the dynamical systems that <incomplete_model> was not evaluated on
@@ -7,7 +10,7 @@ class ResultsObject():
     def __init__(self, path='results_test_univariate__pts_per_period_100__periods_12.json', skip_dyn_systems=None,
                  incomplete_model=None):
         if skip_dyn_systems is None:
-            skip_dyn_systems = ["AtmosphericRegime"]     # not evaluated with the previous models
+            skip_dyn_systems = ["AtmosphericRegime"]  # not evaluated with the previous models
 
         f = open(path)
         self.results = json.load(f)
@@ -90,6 +93,7 @@ def combine_results_files(files=None, prefix='esn_'):
     if files is None:
         return None
     all_results = None
+    failed_combinations = collections.defaultdict(list)
     for path in files:
         model_name = path.split(f"periods_12_")[1][:-5]
         print(f"Combining {model_name} {path}")
@@ -98,9 +102,13 @@ def combine_results_files(files=None, prefix='esn_'):
         if all_results is None:
             all_results = results
             continue
-        for dyn_syst in results:
-            all_results[dyn_syst][model_name] = results[dyn_syst][model_name]
 
+        for dyn_syst in results:
+            try:
+                all_results[dyn_syst][model_name] = results[dyn_syst][model_name]
+            except KeyError as e:
+                failed_combinations[dyn_syst].append(model_name)
+                traceback.print_exc()
 
     # save new file
     start_index = files[0].index(f"{prefix}") + len(prefix)
@@ -109,22 +117,47 @@ def combine_results_files(files=None, prefix='esn_'):
         json.dump(all_results, file)
 
     print(f"Stored combined results in {combined_path}")
+    print('Failed combinations, skip the following dyn_syst when calculating avg rank', failed_combinations)
     return combined_path
 
 
-result_files = ["results_test_univariate__pts_per_period_100__periods_12_esn_ESN_torch.json",
-         "results_test_univariate__pts_per_period_100__periods_12_esn_RNN.json",
-         "results_test_univariate__pts_per_period_100__periods_12_esn_LSTM.json",
-         "results_test_univariate__pts_per_period_100__periods_12_esn_GRU.json"]
+result_files_100 = ["results_test_univariate__pts_per_period_100__periods_12_esn_ESN_torch.json",
+                    "results_test_univariate__pts_per_period_100__periods_12_esn_RNN.json",
+                    "results_test_univariate__pts_per_period_100__periods_12_esn_LSTM.json",
+                    "results_test_univariate__pts_per_period_100__periods_12_esn_GRU.json"]
+
+result_files_15 = ["results_test_univariate__pts_per_period_15__periods_12_esn_ESN_torch.json",
+                   "results_test_univariate__pts_per_period_15__periods_12_esn_RNN.json",
+                   "results_test_univariate__pts_per_period_15__periods_12_esn_LSTM.json",
+                   "results_test_univariate__pts_per_period_15__periods_12_esn_GRU.json"]
 
 if __name__ == "__main__":
-    # combine_results_files(result_files)
+    # 15 coarse
+    ## Cell comparison
+    combine_results_files(result_files_15)
+    results = ResultsObject(path='results_test_univariate__pts_per_period_15__periods_12_esn_ALL.json',
+                            skip_dyn_systems=["PiecewiseCircuit", "AtmosphericRegime"])
+    results.sort_results(print_out=True)
+    results.average_all_methods()
+    # ESN_torch
+    results = ResultsObject(path='results_test_univariate__pts_per_period_15__periods_12_esn_ESN_torch.json')
+    results.sort_results(print_out=False)
+    results.average_all_methods()
+
+    # 100 fine
+    ## Cell comparison
+    combine_results_files(result_files_100)
     results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ALL.json')
     results.sort_results(print_out=True)
     results.average_all_methods()
+    # ESN_torch
+    results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN_torch.json')
+    results.sort_results(print_out=False)
+    results.average_all_methods()
 
-    # Incomplete results
-    results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN.json', incomplete_model='esn_ESN')
-    results.sort_results(print_out=True)
+    # Incomplete results of numpy ESN
+    results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN.json',
+                            incomplete_model='esn_ESN')
+    results.sort_results(print_out=False)
     results.average_all_methods()
     print('Finished')
