@@ -1,16 +1,24 @@
 import json
 from collections import defaultdict
 
-
+# skip_dyn_systems: Skips the selected dynamical systems
+# incomplete_model: Skips all the dynamical systems that <incomplete_model> was not evaluated on
 class ResultsObject():
-    def __init__(self, path='results_test_univariate__pts_per_period_100__periods_12.json', skip_models=None):
-        if skip_models is None:
-            skip_models = ["AtmosphericRegime"]     # not evaluated with the previous models
+    def __init__(self, path='results_test_univariate__pts_per_period_100__periods_12.json', skip_dyn_systems=None,
+                 incomplete_model=None):
+        if skip_dyn_systems is None:
+            skip_dyn_systems = ["AtmosphericRegime"]     # not evaluated with the previous models
 
         f = open(path)
         self.results = json.load(f)
-        for dyn_syst in skip_models:
+        for dyn_syst in skip_dyn_systems:
             self.results.pop(dyn_syst, None)
+        if incomplete_model is not None:
+            for dyn_syst in list(self.results.keys()):
+                if incomplete_model not in self.results[dyn_syst]:
+                    self.results.pop(dyn_syst)
+        self.n_dyn_systems = len(self.results)
+        self.n_models = len(next(iter(self.results.values())))
         self.new_model_ranks = defaultdict(list)
         self.scores = defaultdict(list)
 
@@ -28,6 +36,8 @@ class ResultsObject():
         models_ranked.sort(key=lambda x: x[1])
         for model, rank in models_ranked:
             print(f'Rank {rank:2.3f} {model}')
+
+        print(f"Evaluated {self.n_models} models on {self.n_dyn_systems} dynamical systems")
 
     def sort_results(self, metric='smape', print_out=False):
         results = self.results
@@ -71,9 +81,8 @@ class ResultsObject():
         n = len(self.new_model_ranks[model_name])
         rank_sum = sum([x[1] for x in self.new_model_ranks[model_name]])
         avg_rank = rank_sum / n
-        n_models = len(self.results['Aizawa']) - 1  # one column is 'values'
         if print_out:
-            print(f'{model_name} average rank {avg_rank} out of {n_models} ')
+            print(f'{model_name} average rank {avg_rank} out of {self.n_models} ')
         return avg_rank
 
 
@@ -111,6 +120,11 @@ result_files = ["results_test_univariate__pts_per_period_100__periods_12_esn_ESN
 if __name__ == "__main__":
     # combine_results_files(result_files)
     results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ALL.json')
+    results.sort_results(print_out=True)
+    results.average_all_methods()
+
+    # Incomplete results
+    results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN.json', incomplete_model='esn_ESN')
     results.sort_results(print_out=True)
     results.average_all_methods()
     print('Finished')

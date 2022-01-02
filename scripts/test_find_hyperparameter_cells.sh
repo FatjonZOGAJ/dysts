@@ -7,13 +7,13 @@ python benchmarks/find_hyperparameters.py --hyperparam_config esn_RNN --test_sin
 python benchmarks/find_hyperparameters.py --hyperparam_config esn_ESN --test_single_config 1
 
 exit 0;
-bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_ESN_torch --pts_per_period 15 --test_single_config 1
-bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_LSTM --pts_per_period 15
-bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_GRU --pts_per_period 15
-bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_RNN --pts_per_period 15
-bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_ESN --pts_per_period 15
+# can likely also be run for shorter
+bsub -n 12 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_ESN_torch --pts_per_period 15
+bsub -n 12 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_LSTM --pts_per_period 15
+bsub -n 12 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_GRU --pts_per_period 15
+bsub -n 12 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_RNN --pts_per_period 15
+bsub -n 12 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_ESN --pts_per_period 15
 
-# can also be run for shorter
 bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_ESN_torch --pts_per_period 100
 bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_LSTM --pts_per_period 100
 bsub -n 48 -W 10:00 -R "rusage[mem=512]" python3 benchmarks/find_hyperparameters.py --hyperparam_config esn_GRU --pts_per_period 100
