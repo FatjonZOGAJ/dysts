@@ -131,7 +131,16 @@ result_files_15 = ["results_test_univariate__pts_per_period_15__periods_12_esn_E
                    "results_test_univariate__pts_per_period_15__periods_12_esn_LSTM.json",
                    "results_test_univariate__pts_per_period_15__periods_12_esn_GRU.json"]
 
-if __name__ == "__main__":
+result_files_100_rnn = ["results_test_univariate__pts_per_period_100__periods_12_RNNModel_GRU.json",
+                        "results_test_univariate__pts_per_period_100__periods_12_RNNModel_RNN.json",
+                        "results_test_univariate__pts_per_period_15__periods_12_esn_ESN_torch.json"]
+
+result_files_15_rnn = ["results_test_univariate__pts_per_period_15__periods_12_RNNModel_GRU.json",
+                       "results_test_univariate__pts_per_period_15__periods_12_RNNModel_RNN.json",
+                       "results_test_univariate__pts_per_period_15__periods_12_esn_ESN_torch.json"]
+
+
+def cell_comparison():
     # 15 coarse
     ## Cell comparison
     combine_results_files(result_files_15)
@@ -143,7 +152,6 @@ if __name__ == "__main__":
     results = ResultsObject(path='results_test_univariate__pts_per_period_15__periods_12_esn_ESN_torch.json')
     results.sort_results(print_out=False)
     results.average_all_methods()
-
     # 100 fine
     ## Cell comparison
     combine_results_files(result_files_100)
@@ -154,6 +162,25 @@ if __name__ == "__main__":
     results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN_torch.json')
     results.sort_results(print_out=False)
     results.average_all_methods()
+
+
+def rnn_comparison():
+    # 15 coarse
+    path = combine_results_files(result_files_15_rnn, prefix="RNNModel_")
+    results = ResultsObject(path=path,
+                            skip_dyn_systems=["PiecewiseCircuit", "AtmosphericRegime"])
+    results.sort_results(print_out=True)
+    results.average_all_methods()
+    # 100 fine
+    path = combine_results_files(result_files_100_rnn, prefix="RNNModel_")
+    results = ResultsObject(path=path)
+    results.sort_results(print_out=True)
+    results.average_all_methods()
+
+
+if __name__ == "__main__":
+    rnn_comparison()
+    cell_comparison()
 
     # Incomplete results of numpy ESN
     results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN.json',
