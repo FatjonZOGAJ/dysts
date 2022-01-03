@@ -13,7 +13,6 @@ import copy
 from benchmarks.results.read_results import ResultsObject
 from dysts.datasets import load_file
 
-NUM_RANDOM_RESTARTS = 15
 
 def eval_all_dyn_syst_filip(model):
     cwd = os.path.dirname(os.path.realpath(__file__))
@@ -69,41 +68,11 @@ def eval_all_dyn_syst_filip(model):
         y_train_val_ts = TimeSeries.from_dataframe(pd.DataFrame(y_train_val))
         
         try:
-            
+
             if model.model_name == 'RC-CHAOS-ESN':
 
-                min_smape = 1000000
-                min_smape_model = None
-
-                for i in range(15):
-
-                    #hyperparams = model.sample_set_hyperparams()
-                    model.resample = True
-                    model.fit(y_train_ts)
-
-                    y_val_pred = model.predict(len(y_val))
-                    y_val_pred = np.squeeze(y_val_pred.values())
-
-                    pred_y = TimeSeries.from_dataframe(pd.DataFrame(y_val_pred))
-                    true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
-
-                    metric_func = getattr(darts.metrics.metrics, 'smape')
-                    score = metric_func(true_y, pred_y)
-                    if score < min_smape:
-
-                        #min_hyperparams = hyperparams
-                        min_smape = score
-                        min_W_in = copy.deepcopy(model._cell.W_in)
-                        min_W_h  = copy.deepcopy(model._cell.W_h)
-
-                #model.dynamic_fit_ratio = 4/7
-                #print(min_hyperparams)
-                #model.set_hyperparams(min_hyperparams)
-
-                model._cell.fix_weights(min_W_in, min_W_h)
-                model.resample = False
+                y_test_pred = model.find_best_initial_weights(y_train, y_val)
                 model.fit(y_train_val_ts)
-
                 y_test_pred = model.predict(len(y_test))
                 y_test_pred = np.squeeze(y_test_pred.values())
 
@@ -112,14 +81,15 @@ def eval_all_dyn_syst_filip(model):
                 model.fit(y_train_val_ts)
                 y_test_pred = model.predict(len(y_test))
                 y_test_pred = np.squeeze(y_test_pred.values())
-        
+
+
         except Exception as e:
             warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
             failed_combinations[model_name].append(equation_name)
             continue
         
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(y_test_pred))
-        true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_test)[:-1]))
+        true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_test)))
         
         print('-----', equation_name)
         for metric_name in metric_list:
