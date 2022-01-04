@@ -1,6 +1,7 @@
 import collections
 import json
 import traceback
+import warnings
 from collections import defaultdict
 
 
@@ -20,6 +21,7 @@ class ResultsObject():
         for dyn_syst in skip_dyn_systems:
             self.results.pop(dyn_syst, None)
         if incomplete_model is not None:
+            warnings.warn(f"Only calculating results for which {incomplete_model} was able to evaluate")
             for dyn_syst in list(self.results.keys()):
                 if incomplete_model not in self.results[dyn_syst]:
                     self.results.pop(dyn_syst)
@@ -139,7 +141,7 @@ result_files_15 = ["results_test_univariate__pts_per_period_15__periods_12_esn_E
 
 result_files_100_rnn = ["results_test_univariate__pts_per_period_100__periods_12_RNNModel_GRU.json",
                         "results_test_univariate__pts_per_period_100__periods_12_RNNModel_RNN.json",
-                        "results_test_univariate__pts_per_period_15__periods_12_esn_ESN_torch.json"]
+                        "results_test_univariate__pts_per_period_100__periods_12_esn_ESN_torch.json"]
 
 result_files_15_rnn = ["results_test_univariate__pts_per_period_15__periods_12_RNNModel_GRU.json",
                        "results_test_univariate__pts_per_period_15__periods_12_RNNModel_RNN.json",
@@ -191,6 +193,12 @@ if __name__ == "__main__":
     # Incomplete results of numpy ESN
     results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN.json',
                             incomplete_model='esn_ESN')
+    results.sort_results(print_out=False)
+    results.average_all_methods()
+    print('Finished')
+
+    # only best model, use this for reporting its ranks
+    results = ResultsObject(path='results_test_univariate__pts_per_period_100__periods_12_esn_ESN_torch.json')
     results.sort_results(print_out=False)
     results.average_all_methods()
     print('Finished')
