@@ -6,6 +6,9 @@ from collections import defaultdict
 
 # skip_dyn_systems: Skips the selected dynamical systems
 # incomplete_model: Skips all the dynamical systems that <incomplete_model> was not evaluated on
+import numpy as np
+
+
 class ResultsObject():
     def __init__(self, path='results_test_univariate__pts_per_period_100__periods_12.json', skip_dyn_systems=None,
                  incomplete_model=None):
@@ -29,16 +32,16 @@ class ResultsObject():
         models = set()
         for dyn_syst in self.scores:
             for rank, (model_name, score) in enumerate(self.scores[dyn_syst]):
-                self.new_model_ranks[model_name].append((dyn_syst, rank))
+                self.new_model_ranks[model_name].append((dyn_syst, rank, score))
                 models.add(model_name)
 
         models_ranked = []
         for model in models:
-            models_ranked.append((model, self.get_average_rank(model, print_out=True)))
+            models_ranked.append((model, *self.get_average_rank(model, print_out=True)))
 
         models_ranked.sort(key=lambda x: x[1])
-        for model, rank in models_ranked:
-            print(f'Rank {rank:2.3f} {model}')
+        for model, rank, mean, median in models_ranked:
+            print(f'Rank {rank:2.3f} Mean {mean:3.3f} Median {median:3.3f} {model}')
 
         print(f"Evaluated {self.n_models} models on {self.n_dyn_systems} dynamical systems")
 
@@ -84,9 +87,12 @@ class ResultsObject():
         n = len(self.new_model_ranks[model_name])
         rank_sum = sum([x[1] for x in self.new_model_ranks[model_name]])
         avg_rank = rank_sum / n
+        scores = [x[2] for x in self.new_model_ranks[model_name]]
+        avg_score = np.mean(scores)
+        median_score = np.median(scores)
         if print_out:
-            print(f'{model_name} average rank {avg_rank} out of {self.n_models} ')
-        return avg_rank
+            print(f'{model_name} average rank {avg_rank} out of {self.n_models} | avg {avg_score} median {median_score}')
+        return avg_rank, avg_score, median_score
 
 
 def combine_results_files(files=None, prefix='esn_'):
