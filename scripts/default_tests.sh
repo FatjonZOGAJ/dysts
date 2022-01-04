@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default RC_ESN with resampling
-python models/RC_ESN --cell_type ESN # --resample True
+python models/RC_ESN.py --cell_type ESN # --resample True
 
 # Ensemble
 python models/RC_ESN_ensemble.py
