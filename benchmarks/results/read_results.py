@@ -4,17 +4,16 @@ import traceback
 import warnings
 from collections import defaultdict
 
-
-# skip_dyn_systems: Skips the selected dynamical systems
-# incomplete_model: Skips all the dynamical systems that <incomplete_model> was not evaluated on
 import numpy as np
 
 
+# skip_dyn_systems: Skips the selected dynamical systems
+# incomplete_model: Skips all the dynamical systems that <incomplete_model> was not evaluated on
 class ResultsObject():
     def __init__(self, path='results_test_univariate__pts_per_period_100__periods_12.json', skip_dyn_systems=None,
                  incomplete_model=None):
         if skip_dyn_systems is None:
-            skip_dyn_systems = ["AtmosphericRegime"]  # not evaluated with the previous models
+            skip_dyn_systems = ["AtmosphericRegime"]  # not evaluated with the original models
 
         f = open(path)
         self.results = json.load(f)
@@ -93,7 +92,8 @@ class ResultsObject():
         avg_score = np.mean(scores)
         median_score = np.median(scores)
         if print_out:
-            print(f'{model_name} average rank {avg_rank} out of {self.n_models} | avg {avg_score} median {median_score}')
+            print(
+                f'{model_name} average rank {avg_rank} out of {self.n_models} | avg {avg_score} median {median_score}')
         return avg_rank, avg_score, median_score
 
 
@@ -116,7 +116,7 @@ def combine_results_files(files=None, prefix='esn_'):
                 all_results[dyn_syst][model_name] = results[dyn_syst][model_name]
             except KeyError as e:
                 failed_combinations[dyn_syst].append(model_name)
-                traceback.print_exc()
+                # traceback.print_exc()   # Not an error, we continue
 
     # save new file
     start_index = files[0].index(f"{prefix}") + len(prefix)

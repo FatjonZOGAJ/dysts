@@ -7,7 +7,6 @@ import sys
 
 module_paths = [
     os.path.abspath(os.getcwd()),
-    os.path.abspath(os.getcwd() + '//rc_chaos//Methods'),
 ]
 
 for module_path in module_paths:
@@ -16,9 +15,8 @@ for module_path in module_paths:
         sys.path.append(module_path)
 
 
-from models.utils import eval_simple, eval_all_dyn_syst
-from rc_chaos.Methods.Models.esn.esn_rc_dyst_copy import esn
-from rc_chaos.Methods.RUN import new_args_dict
+from models.utils import eval_simple, eval_all_dyn_syst, new_args_dict
+from models.RC_ESN import esn
 
 
 class ESNEnsemble(VotingRegressor):

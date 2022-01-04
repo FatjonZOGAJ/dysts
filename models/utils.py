@@ -14,8 +14,8 @@ from darts import TimeSeries
 from benchmarks.results.read_results import ResultsObject
 from dysts.datasets import load_file
 
-
 NUM_RANDOM_RESTARTS = 15
+
 
 def set_seed(seed):
     seed %= 4294967294
@@ -23,11 +23,12 @@ def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():   # multi-gpu mode
+    if torch.cuda.is_available():  # multi-gpu mode
         torch.cuda.manual_seed_all(seed)
     # does not set tensorflow
     # import tensorflow as tf
     # tf.set_random_seed(seed)
+
 
 def eval_simple(model):
     train_data = np.arange(1200)
@@ -102,7 +103,7 @@ def eval_single_dyn_syst(model, dataset):
         if metric_name == METRIC:
             value = score
             rank = results.update_results(dataset, model_name, score)
-    return value, rank#, model._cell.W_h
+    return value, rank  # , model._cell.W_h
 
 
 def eval_all_dyn_syst(model):
@@ -151,13 +152,13 @@ def eval_all_dyn_syst(model):
             else:
                 model.fit(y_train_ts)
                 y_val_pred = model.predict(len(y_val))
-        
+
         except Exception as e:
             warnings.warn(f'Could not evaluate {equation_name} for {model_name} {e.args}')
             failed_combinations[model_name].append(equation_name)
             traceback.print_exc()
             continue
-        
+
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))
         true_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val)[:-1]))
 
@@ -192,3 +193,64 @@ def get_hyperparam_parser():
     parser.add_argument("--pts_per_period", help="", type=int, default=100)
     args = parser.parse_args()
     return args
+
+
+class scaler(object):
+    def __init__(self, tt):
+        self.tt = tt
+        self.data_min = 0
+        self.data_max = 0
+        self.data_mean = 0
+        self.data_std = 0
+
+    def scaleData(self, input_sequence, reuse=None):
+        # data_mean = np.mean(train_input_sequence,0)
+        # data_std = np.std(train_input_sequence,0)
+        # train_input_sequence = (train_input_sequence-data_mean)/data_std
+        if reuse == None:
+            self.data_mean = np.mean(input_sequence, 0)
+            self.data_std = np.std(input_sequence, 0)
+            self.data_min = np.min(input_sequence, 0)
+            self.data_max = np.max(input_sequence, 0)
+        if self.tt == "MinMaxZeroOne":
+            input_sequence = np.array((input_sequence - self.data_min) / (self.data_max - self.data_min))
+        elif self.tt == "Standard" or self.tt == "standard":
+            input_sequence = np.array((input_sequence - self.data_mean) / self.data_std)
+        elif self.tt != "no":
+            raise ValueError("Scaler not implemented.")
+        return input_sequence
+
+    def descaleData(self, input_sequence):
+        if self.tt == "MinMaxZeroOne":
+            input_sequence = np.array(input_sequence * (self.data_max - self.data_min) + self.data_min)
+        elif self.tt == "Standard" or self.tt == "standard":
+            input_sequence = np.array(input_sequence * self.data_std.T + self.data_mean)
+        elif self.tt != "no":
+            raise ValueError("Scaler not implemented.")
+        return input_sequence
+
+
+def getNewESNParser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cell_type", help="cell for embedding", type=str, default='ESN_torch')
+    parser.add_argument("--reservoir_size", help="reservoir_size", type=int, default=1000)
+    parser.add_argument("--sparsity", help="sparsity", type=float, default=0.01)
+    parser.add_argument("--radius", help="radius", type=float, default=0.5)
+    parser.add_argument("--sigma_input", help="sigma_input", type=float, default=1)
+    parser.add_argument("--dynamics_fit_ratio", help="dynamics_fit_ratio", type=float, default=2 / 7)
+    parser.add_argument("--regularization", help="regularization", type=float, default=0.0)
+    parser.add_argument("--scaler_tt", help="scaler_tt", type=str, default='Standard')
+    parser.add_argument("--solver", help="solver used to learn mapping H -> Y, it can be [pinv, saga, gd]", type=str,
+                        default="pinv")
+    parser.add_argument("--seed", type=int, default=1)
+    # parser.add_argument("--resample", type=str2bool, default=False)
+
+    return parser
+
+
+def new_args_dict():
+    parser = getNewESNParser()
+    args = parser.parse_args()
+
+    args_dict = args.__dict__
+    return args_dict

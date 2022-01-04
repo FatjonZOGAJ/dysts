@@ -5,6 +5,7 @@ import os
 import json
 
 import dysts
+from benchmarks.find_hyperparameters import get_model
 from dysts.datasets import *
 
 import pandas as pd
@@ -15,7 +16,6 @@ from darts.models import *
 from darts import TimeSeries
 import darts.models
 
-from models import models
 
 # to change
 pts_per_period = 15  # 100
@@ -81,15 +81,14 @@ for equation_name in equation_data.dataset:
             if "season" in hyperparameter_name:
                 old_val = all_hyperparameters[equation_name][model_name][hyperparameter_name]
                 all_hyperparameters[equation_name][model_name][hyperparameter_name] = getattr(darts.utils.utils.SeasonalityMode, old_val)
-    
-        if model_name in models:
-            model = models[model_name](**all_hyperparameters[equation_name][model_name])
-        else:
-            model = getattr(darts.models, model_name)(**all_hyperparameters[equation_name][model_name])
-            if model_name == 'Prophet':
-                df = pd.DataFrame(np.squeeze(y_train_ts.values()))
-                df.index = pd.DatetimeIndex(y_train_ts.time_index)
-                y_train_ts = TimeSeries.from_dataframe(df)
+
+        model = get_model(model_name)
+
+        if model_name == 'Prophet':
+            df = pd.DataFrame(np.squeeze(y_train_ts.values()))
+            df.index = pd.DatetimeIndex(y_train_ts.time_index)
+            y_train_ts = TimeSeries.from_dataframe(df)
+
         model.fit(y_train_ts)
         y_val_pred = model.predict(len(y_val))
         pred_y = TimeSeries.from_dataframe(pd.DataFrame(np.squeeze(y_val_pred.values())))

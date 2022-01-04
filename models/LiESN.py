@@ -14,7 +14,6 @@ from torch.utils.data import TensorDataset, DataLoader
 from echotorch.nn import LiESN
 
 from models.utils import eval_simple, eval_all_dyn_syst
-from rc_chaos.Methods.RUN import getModel, get_args_dict
 
 
 class LiESNForecaster(LiESN, GlobalForecastingModel):

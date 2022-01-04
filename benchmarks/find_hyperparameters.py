@@ -6,7 +6,6 @@ import traceback
 
 module_paths = [
     os.path.abspath(os.getcwd()),
-    os.path.abspath(os.getcwd() + '//rc_chaos//Methods'),
 ]
 
 for module_path in module_paths:
@@ -15,7 +14,7 @@ for module_path in module_paths:
         sys.path.append(module_path)
 
 from benchmarks import eval_test
-from rc_chaos.Methods.Models.esn.esn_rc_dyst_copy import esn
+from models.RC_ESN import esn
 
 from benchmarks.hyperparameter_config import hyperparameter_configs, get_single_config
 from dysts.datasets import *
@@ -25,33 +24,21 @@ import pandas as pd
 from darts import TimeSeries
 import darts.models
 
-
-
-#from models import models
 from models.utils import get_hyperparam_parser
 
 cwd = os.path.dirname(os.path.realpath(__file__))
-# cwd = os.getcwd()
-
 
 args = get_hyperparam_parser()
 
 # to change
 pts_per_period = args.pts_per_period
-#pts_per_period = 100         # 100
-hyp_file_ending = ''  # '_DEBUG_DEBUG_DEBUG'
-results_path_ending = ''    # can also be '_DEBUG'
-# if we have 100 pts_per_period we should tune on validation data, for 15 it may not overfit too much
-EVALUATE_VALID = False       # evaluate on separate part of data
+hyp_file_ending = ''
+results_path_ending = ''
+EVALUATE_VALID = False  # evaluate on separate part of data
 N_JOBS = -1
-
 
 input_path = os.path.dirname(cwd) + f"/dysts/data/train_univariate__pts_per_period_{pts_per_period}__periods_12.json"
 network_inputs = [5, 10, int(0.5 * pts_per_period), pts_per_period]  # can't have kernel less than 5
-
-# input_path = os.path.dirname(cwd)  + "/dysts/data/train_univariate__pts_per_period_100__periods_12.json"
-# pts_per_period = 100
-# network_inputs = [5, 10, int(0.25 * pts_per_period), int(0.5 * pts_per_period), pts_per_period]
 
 SKIP_EXISTING = True
 season_values = [darts.utils.utils.SeasonalityMode.ADDITIVE,
@@ -74,7 +61,6 @@ if not has_gpu:
 else:
     warnings.warn("GPU working.")
 
-
 dataname = os.path.splitext(os.path.basename(os.path.split(input_path)[-1]))[0]
 output_path = cwd + "/hyperparameters/hyperparameters_" + dataname + f"{hyp_file_ending}.json"
 
@@ -88,9 +74,10 @@ except FileNotFoundError:
 
 parameter_candidates = dict()
 
+# existing models
 parameter_candidates["ARIMA"] = {"p": time_delays}
 parameter_candidates["LinearRegressionModel"] = {"lags": time_delays}
-parameter_candidates["RandomForest"] = {"lags": time_delays}#, "lags_exog": [None]}
+parameter_candidates["RandomForest"] = {"lags": time_delays}  # , "lags_exog": [None]}
 parameter_candidates["NBEATSModel"] = {"input_chunk_length": network_inputs, "output_chunk_length": network_outputs}
 parameter_candidates["TCNModel"] = {"input_chunk_length": network_inputs, "output_chunk_length": network_outputs}
 parameter_candidates["TransformerModel"] = {"input_chunk_length": network_inputs,
@@ -116,7 +103,8 @@ if args.hyperparam_config:
 
     results_path_ending += "_" + args.hyperparam_config
 
-    test_input_path = os.path.dirname(cwd)  + f"/dysts/data/test_univariate__pts_per_period_{pts_per_period}__periods_12.json"
+    test_input_path = os.path.dirname(
+        cwd) + f"/dysts/data/test_univariate__pts_per_period_{pts_per_period}__periods_12.json"
     test_equation_data = load_file(test_input_path)
 
     try:
@@ -125,6 +113,7 @@ if args.hyperparam_config:
             all_results = json.load(file)
     except FileNotFoundError:
         all_results = dict()
+
 
 def get_model(model_name):
     model_class = model_name
@@ -136,6 +125,7 @@ def get_model(model_name):
         model = esn
 
     return model
+
 
 failed_combinations = collections.defaultdict(list)
 for e_i, equation_name in enumerate(equation_data.dataset):
@@ -164,7 +154,6 @@ for e_i, equation_name in enumerate(equation_data.dataset):
 
             model = get_model(model_name)
 
-            # TODO: check if time_index is correct
             if model_name == 'Prophet':
                 df = pd.DataFrame(np.squeeze(y_train_ts.values()))
                 df.index = pd.DatetimeIndex(y_train_ts.time_index)
@@ -175,7 +164,7 @@ for e_i, equation_name in enumerate(equation_data.dataset):
 
             model_best = model.gridsearch(parameter_candidates[model_name], y_train_ts, val_series=y_test_ts,
                                           metric=darts.metrics.smape,
-                                          n_jobs=N_JOBS)    # ATTENTION: under windows n_jobs has to be 1 or it has to be run from commandline
+                                          n_jobs=N_JOBS)
 
             best_hyperparameters = model_best[1].copy()
 
@@ -197,14 +186,14 @@ for e_i, equation_name in enumerate(equation_data.dataset):
             json.dump(all_hyperparameters, f, indent=4)
 
         try:
-            eval_test(get_model(model_name)(**model_best[1]), model_name, test_equation_data, equation_name, all_results,
+            eval_test(get_model(model_name)(**model_best[1]), model_name, test_equation_data, equation_name,
+                      all_results,
                       test_output_path, results_path_ending)
         except Exception as e:
             failed_combinations[f'EVALUATION{model_name}'].append(equation_name)
             traceback.print_exc()
             continue
 
-
 with open(output_path[:-5] + f'{results_path_ending}.json', 'w') as f:
-        json.dump(all_hyperparameters, f, indent=4)
+    json.dump(all_hyperparameters, f, indent=4)
 print('Failed combinations', failed_combinations)

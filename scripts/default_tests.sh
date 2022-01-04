@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Default RC_ESN
-python rc_chaos/Methods/Models/esn/esn_rc_dyst_copy.py
+# Default RC_ESN with resampling
+python models/RC_ESN --cell_type ESN # --resample True
 
 # Ensemble
-python models/ESNEnsemble.py
+python models/RC_ESN_ensemble.py
 
 # Backprop ESN
-python rc_chaos/Methods/Models/esn/esn_rc_dyst_torch.py
+python models/RC_ESN_torch.py
