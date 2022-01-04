@@ -28,6 +28,20 @@ Additionally: https://github.com/pytorch/pytorch/issues/35803
 
     mv C:\Users\blend\miniconda3\envs\rc\lib\site-packages\torch\lib\caffe2_detectron_ops.dll C:\Users\blend\miniconda3\envs\rc\lib\site-packages\torch\lib\caffe2_detectron_ops.dll_old
 
+# Rerunning Experiments
+
+We provide bash scripts to reproduce our experiments and results.
+After some manual hyperparameter evaluation we have identified multiple Reservoir Computing and RNN models over which we run an extensive hyperparameter search. 
+
+    bash scripts/test_find_hyperparameter_cells.sh
+
+Note that this will only run a single hyperparameter configuration (indicated by _--test_single_config 1_) as rerunning all experiments takes significant computational resources.
+Commands to execute the full experiments have been provided in the latter part of the file (indicated by _bsub_).
+
+Other experiments (including some which were not followed further due to bad performance) can be run by calling:
+
+    bash scripts/default_test.sh
+
 ## Dysts Installation
 
 Install from PyPI

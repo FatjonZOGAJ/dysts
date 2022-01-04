@@ -81,7 +81,7 @@ class ResultsObject():
             worst = dyn_sys[len(dyn_sys) - 1]
             print(f'\t {len(dyn_sys) - 1:2} {worst[0]:25} {worst[1]:10.3f}')
 
-        self.new_model_ranks[model_name].append((equation_name, i))
+        self.new_model_ranks[model_name].append((equation_name, i, score))
         self.scores[equation_name] = dyn_sys
         return i
 

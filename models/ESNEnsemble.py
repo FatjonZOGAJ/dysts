@@ -39,7 +39,7 @@ class ESNEnsemble(VotingRegressor):
 
 
 def main():
-    model_name = 'RC-CHAOS-ESN-Ensemble_DEBUG_DEFAULT'
+    model_name = 'RC-CHAOS-ESN-Ensemble'
     kwargs = new_args_dict()
     models = []
     n_models = 5
