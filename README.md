@@ -5,7 +5,7 @@
     #git submodule init
     #git submodule update
 
-    python3 -m venv rc
+    virtualenv rc --python=python3.7
     source rc/bin/activate
     pip install -r req.txt
     pip install -i https://test.pypi.org/simple/ EchoTorch
@@ -29,7 +29,7 @@ Commands to execute the full experiments on Euler have been provided in the latt
 
 Other experiments (including some which were not followed further due to bad performance) can be ran by calling:
 
-    bash scripts/default_test.sh
+    bash scripts/default_tests.sh
 
 These were included for completeness reasons.
 
