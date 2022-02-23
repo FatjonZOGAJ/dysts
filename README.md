@@ -1,3 +1,13 @@
+## Reservoir Computing for Nonlinear Dynamical Systems
+
+This project was done as part of the mandatory group assignment for the [Deep Learning Course at ETH Zurich](http://da.inf.ethz.ch/teaching/2021/DeepLearning/) in Fall '21. 
+
+It has received a grade of 5.775/6.0, where a grade of 6.0 by ETH Zurich standards implies "Good enough for submission to an international conference".
+
+For more information, please check our [report](report.pdf).
+
+__Abstract:__ Chaotic dynamical systems continue to puzzle and amaze practitioners due to their inherent unpredictability, despite their finite and concise representations. In spite of its simplicity, Reservoir Computing \citep{herbert2001echo} has been demonstrated to be well-equipped at the task of predicting the trajectories of chaotic systems where more intricate and computationally intensive Deep Learning methods have failed, but it has so far only been evaluated on a small and selected set of chaotic systems \citep{vlachas_backpropagation_2020}. We build and evaluate the performance of a Reservoir Computing model known as the Echo State Network (ESN) \citep{herbert2001echo} on a large collection of chaotic systems recently published by \citet{gilpin2021chaos} and show that ESN does in fact beat all but the top approach out of the 16 forecasting baselines reported by the author.
+
 ## Main installation
     git clone https://github.com/FatjonZOGAJ/dysts.git
     cd dysts
