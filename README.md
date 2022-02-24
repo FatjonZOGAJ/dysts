@@ -1,4 +1,4 @@
-## Reservoir Computing for Chaotic Dynamical Systems
+# Reservoir Computing for Chaotic Dynamical Systems
 
 This project was done as part of the mandatory group assignment for the [Deep Learning Course at ETH Zurich](http://da.inf.ethz.ch/teaching/2021/DeepLearning/) in Fall '21. It has received a grade of 5.775/6.0, whereas a grade of 6.0 by ETH Zurich standards implies "Good enough for submission to an international conference".
 
